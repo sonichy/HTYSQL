@@ -9,6 +9,7 @@
 #include <QModelIndexList>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QSqlIndex>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -110,7 +111,9 @@ void MainWindow::itemActivated(QTreeWidgetItem *item, int column)
     tableModel->setTable(item->text(0));
     tableModel->select();
     ui->statusBar->showMessage(tableModel->lastError().text());
+    tableModel->setHeaderData(0, Qt::Horizontal, QVariant::fromValue(QIcon(":/key.png")), Qt::DecorationRole);
     ui->tableView->setModel(tableModel);
+    qDebug() << tableModel->primaryKey();
 }
 
 void MainWindow::on_treeWidget_customContextMenuRequested(QPoint pos)

@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>HTYSQL.png</file>
+        <file>key.png</file>
     </qresource>
 </RCC>

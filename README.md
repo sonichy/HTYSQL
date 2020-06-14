@@ -1,4 +1,4 @@
-# HTYSQL
+# 海天鹰SQL
 一款基于 Qt5 的SQL数据库管理工具，已编译好的 HTYSQL 适用于 Linux 64 位 Qt5.11 环境。
 ![alt](preview.png)
 ### 参考
