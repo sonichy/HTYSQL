@@ -38,6 +38,9 @@
        <property name="contextMenuPolicy">
         <enum>Qt::CustomContextMenu</enum>
        </property>
+       <property name="sortingEnabled">
+        <bool>true</bool>
+       </property>
       </widget>
      </widget>
     </item>
@@ -50,7 +53,7 @@
        </size>
       </property>
       <property name="title">
-       <string>SQL Query</string>
+       <string>SQL查询</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -58,6 +61,26 @@
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QComboBox" name="comboBox_filter"/>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="lineEdit_filter">
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>16777215</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_filter">
+           <property name="text">
+            <string>过滤</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <spacer name="horizontalSpacer">
            <property name="orientation">
@@ -74,7 +97,7 @@
          <item>
           <widget class="QPushButton" name="pushButton_query">
            <property name="text">
-            <string>Query</string>
+            <string>查询</string>
            </property>
           </widget>
          </item>
@@ -166,5 +189,22 @@
  <resources>
   <include location="res.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>lineEdit_filter</sender>
+   <signal>returnPressed()</signal>
+   <receiver>pushButton_filter</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>151</x>
+     <y>536</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>234</x>
+     <y>536</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
