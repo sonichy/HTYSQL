@@ -22,43 +22,67 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->splitter->setStretchFactor(1,8);
     connect(ui->action_quit, SIGNAL(triggered()), qApp, SLOT(quit()));
     connect(ui->treeWidget, SIGNAL(itemActivated(QTreeWidgetItem*, int)), this, SLOT(itemActivated(QTreeWidgetItem*, int)));
-    connect(ui->tableView, &QTableView::customContextMenuRequested, [=](const QPoint& pos){        
+    connect(ui->tableView, &QTableView::customContextMenuRequested, [=](const QPoint& pos){
         QModelIndex index = ui->tableView->indexAt(pos);
         int column = index.column();
-        QString text = index.data(Qt::DisplayRole).toString();
-        QString header = ui->tableView->model()->headerData(column, Qt::Horizontal, Qt::DisplayRole).toString();
-        QList<QAction*> actions;
-        QAction *action_copy = new QAction("复制");
-        QAction *action_search = new QAction("搜索 \"" + text + "\"");
-        QAction *action_delete = new QAction("删除");
-        actions.append(action_copy);
-        actions.append(action_search);
-        actions.append(action_delete);
-        QAction *result_action = QMenu::exec(actions, ui->tableView->mapToGlobal(pos));
-        if (result_action == action_search) {
-            ui->textEdit_sql->setText("SELECT * FROM " + ui->treeWidget->currentItem()->text(0) + " WHERE " + header + " LIKE '%" + text + "%'");
-        } else if (result_action == action_copy) {
-            QModelIndexList modelIndexList = ui->tableView->selectionModel()->selectedIndexes();
-            QString s = "";
-            for (int i=0; i<modelIndexList.size(); i++) {
-                s += "\"" + modelIndexList.at(i).data(Qt::DisplayRole).toString() + "\" ";
-            }
-            QClipboard *clipboard = QApplication::clipboard();
-            clipboard->setText(s);
-        } else if (result_action == action_delete) {
-            QModelIndexList modelIndexList = ui->tableView->selectionModel()->selectedIndexes();
-            for (int i=0; i<modelIndexList.size(); i++) {
-                tableModel->removeRow(modelIndexList.at(i).row());
-            }
-            int SB = QMessageBox::warning(this, "删除当前行", "你确定要删除当前行吗？", QMessageBox::Yes, QMessageBox::No);
-            if (SB == QMessageBox::Yes) {
+        qDebug() << column;
+        if (column > -1) {
+            QString text = index.data(Qt::DisplayRole).toString();
+            QFontMetrics FM(qApp->font());
+            QString text_elide = FM.elidedText(text, Qt::ElideRight, 150);
+            QString header = ui->tableView->model()->headerData(column, Qt::Horizontal, Qt::DisplayRole).toString();
+            QList<QAction*> actions;
+            QAction *action_insert_row = new QAction("插入行");
+            QAction *action_copy = new QAction("复制");
+            QAction *action_search = new QAction("搜索 \"" + text_elide + "\"");
+            QAction *action_delete_row = new QAction("删除行");
+            QAction *action_submit = new QAction("提交");
+            QAction *action_revert = new QAction("撤销");
+            actions.append(action_insert_row);
+            actions.append(action_copy);
+            actions.append(action_search);
+            actions.append(action_delete_row);
+            actions.append(action_submit);
+            actions.append(action_revert);
+            QAction *result_action = QMenu::exec(actions, ui->tableView->mapToGlobal(pos));
+            if (result_action == action_insert_row) {
+                int row = ui->tableView->currentIndex().row() + 1;
+                tableModel->insertRow(row);
+                QModelIndex index_insert = tableModel->index(row, 0);
+                ui->tableView->edit(index_insert);
+            } else if (result_action == action_search) {
+                ui->textEdit_sql->setText("SELECT * FROM " + ui->treeWidget->currentItem()->text(0) + " WHERE " + header + " LIKE '%" + text + "%'");
+            } else if (result_action == action_copy) {
+                QModelIndexList modelIndexList = ui->tableView->selectionModel()->selectedIndexes();
+                QString s = "";
+                for (int i=0; i<modelIndexList.size(); i++) {
+                    s += "\"" + modelIndexList.at(i).data(Qt::DisplayRole).toString() + "\" ";
+                }
+                QClipboard *clipboard = QApplication::clipboard();
+                clipboard->setText(s);
+            } else if (result_action == action_delete_row) {
+                QModelIndexList modelIndexList = ui->tableView->selectionModel()->selectedIndexes();
+                for (int i=0; i<modelIndexList.size(); i++) {
+                    tableModel->removeRow(modelIndexList.at(i).row());
+                }
+                int SB = QMessageBox::warning(this, "删除当前行", "你确定要删除当前行吗？", QMessageBox::Yes, QMessageBox::No);
+                if (SB == QMessageBox::Yes) {
+                    if (tableModel->submitAll()) {
+                        tableModel->select();
+                    } else {
+                        QMessageBox::critical(this, "错误", tableModel->lastError().text(), QMessageBox::Ok);
+                    }
+                } else {
+                    tableModel->revertAll();
+                }
+            } else if (result_action == action_submit) {
                 if (tableModel->submitAll()) {
                     tableModel->select();
                 } else {
                     QMessageBox::critical(this, "错误", tableModel->lastError().text(), QMessageBox::Ok);
                 }
-            } else {
-                tableModel->revertAll();
+            } else if (result_action == action_revert) {
+                tableModel->select();
             }
         }
     });
@@ -137,11 +161,12 @@ void MainWindow::itemActivated(QTreeWidgetItem *item, int column)
     //qDebug() << tableModel->primaryKey();
     tableModel->setHeaderData(0, Qt::Horizontal, QVariant::fromValue(QIcon(":/key.png")), Qt::DecorationRole);
     ui->tableView->setModel(tableModel);
+    ui->statusBar->showMessage("共 " + QString::number(ui->tableView->model()->rowCount()) + " 条记录");
     ui->comboBox_filter->clear();
     for(int i=0; i<tableModel->columnCount(); i++){
         QString header = tableModel->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString();
         ui->comboBox_filter->addItem(header);
-    }
+    }    
 }
 
 void MainWindow::on_treeWidget_customContextMenuRequested(QPoint pos)
