@@ -157,12 +157,20 @@ void MainWindow::itemActivated(QTreeWidgetItem *item, int column)
     Q_UNUSED(column);
     tableModel->setTable(item->text(0));
     tableModel->select();
-    ui->statusBar->showMessage(tableModel->lastError().text());
-    //qDebug() << tableModel->primaryKey();
-    tableModel->setHeaderData(0, Qt::Horizontal, QVariant::fromValue(QIcon(":/key.png")), Qt::DecorationRole);
+    ui->statusBar->showMessage(tableModel->lastError().text());    
     ui->tableView->setModel(tableModel);
     ui->statusBar->showMessage("共 " + QString::number(ui->tableView->model()->rowCount()) + " 条记录");
     ui->comboBox_filter->clear();
+    QSqlIndex sqlIndex = tableModel->primaryKey();
+    qDebug() << sqlIndex;
+    for (int i=0; i<sqlIndex.count(); i++) {
+        for (int c=0; c<tableModel->columnCount(); c++) {
+            QString header = tableModel->headerData(c, Qt::Horizontal, Qt::DisplayRole).toString();
+            if (header == sqlIndex.fieldName(i)) {
+                tableModel->setHeaderData(c, Qt::Horizontal, QVariant::fromValue(QIcon(":/key.png")), Qt::DecorationRole);
+            }
+        }
+    }
     for(int i=0; i<tableModel->columnCount(); i++){
         QString header = tableModel->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString();
         ui->comboBox_filter->addItem(header);
